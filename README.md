@@ -78,9 +78,10 @@ Model will be trained and stored in **./models** folder
 4. Train Grade Classifier
 
 Run acne_circle_final.ipynb
+This should output lightgbm model for grade classifer
 
 ---
 
 ## Demo
 
-Run file present2.ipynb
+Run file present2.ipynb to present the result and evaluation
