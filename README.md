@@ -57,10 +57,14 @@ pip install -r requirements.txt
 Object detection dataset should be organized in COCO format
 ```
 root
-| - bbox	<contain COCO format files info>
-| - image	<contain images>
-| - models	<store model files>
-| - mAP		<eval package>
+| - bbox			<contain COCO format files info>
+   	| - img1		<coco info of img1>
+   	| - img2		<coco info of img2>
+| - image			<contain images>
+	| - img1.jpg		<img1>
+   	| - img2.jpg		<img2>
+| - models			<store model files>
+| - mAP				<eval package>
 ```	
 
 
