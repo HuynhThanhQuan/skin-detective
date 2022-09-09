@@ -23,11 +23,8 @@ import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor, FasterRCNN_ResNet50_FPN_Weights
 from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.rpn import AnchorGenerator
-from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import SequentialSampler
-import albumentations as A
-from albumentations.pytorch.transforms import ToTensorV2
-import transforms as T
+from torch.utils.data import DataLoader
 
 # Misc
 from sklearn.model_selection import train_test_split
@@ -38,107 +35,14 @@ from engine import train_one_epoch, evaluate
 import utils
 import logging
 import acne_configs
+from acne_dataset import AcneDataset
+from acne_utils import get_train_transform, get_test_transform, collate_fn
 
 
 logging.debug(f"PyTorch Version: {torch.__version__}")
 logging.debug(f"Torchvision Version: {torchvision.__version__}")
 
-
-class AcneDataset(Dataset):
     
-    def __init__(self, dataset_loc, transforms=None):
-        super().__init__()
-        self.dataset_loc = dataset_loc
-        self.image_folder = os.path.join(dataset_loc, 'image')
-        self.coco_json = json.load(open(os.path.join(dataset_loc, 'coco_instances.json'),'r'))
-        self.category = self.coco_json['categories']
-        self.images = self.coco_json['images']
-        self.annotations = self.coco_json['annotations']
-        self.transforms = transforms
-        self.reload_annotation()
-        
-    def reload_annotation(self):
-        self.imageid_annotations = {}
-        for anno in self.annotations:
-            imgid = anno['image_id']
-            self.imageid_annotations[imgid] = {
-                'classes': [],
-                'boxes': []
-            }
-        for anno in self.annotations:
-            imgid = anno['image_id']
-            cate = anno['category_id']
-            bbox = anno['bbox']
-            self.imageid_annotations[imgid]['classes'].append(cate)
-            self.imageid_annotations[imgid]['boxes'].append(bbox)
-         
-        keys = range(len(self.imageid_annotations))
-        values = list(self.imageid_annotations.keys())
-        self.correct_idx = dict(zip(keys,values))
-        # print(self.correct_idx)
-        
-    def __getitem__(self, idx):
-        index = self.correct_idx[idx]
-        image_id = self.images[index]['id']
-        image_fn = self.images[index]['file_name']
-        width, height = self.images[index]['width'], self.images[index]['height']
-        
-        classes = self.imageid_annotations[image_id]['classes']
-        boxes = self.imageid_annotations[image_id]['boxes']
-        voc_boxes = []
-        for b in boxes:
-            x,y,w,h = b
-            x0,y0,x1,y1 = x,y, x+w, y+h
-            voc_boxes.append([x0,y0,x1,y1])
-        
-        image = cv2.imread(os.path.join(self.image_folder, image_fn))
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image = image/255.0
-        image = image.transpose(2,0,1)
-        image = torch.from_numpy(image).float()
-       
-        boxes = np.array(voc_boxes)
-        if boxes.shape == (0,):
-            raise Exception(f'Wrong format {image_id}')
-        labels = torch.tensor(classes, dtype=torch.int64)
-        area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
-        # suppose all instances are not crowd
-        num_objs = len(boxes)
-        iscrowd = torch.zeros((num_objs,), dtype=torch.int64)
-
-        target = {}
-        target['boxes'] = torch.from_numpy(boxes)
-        target['labels'] = labels
-        target['image_id'] = torch.tensor([index])
-        target["area"] = torch.from_numpy(area)
-        target["iscrowd"] = iscrowd
-        return image, target
-    
-    def __len__(self):
-        return len(self.imageid_annotations)
-
-    
-def get_train_transform():
-    return A.Compose([
-        A.Flip(0.5),
-        A.ShiftScaleRotate(scale_limit=0.1, rotate_limit=45, p=0.25),
-        A.LongestMaxSize(max_size=800, p=1.0),
-        A.Normalize(mean=(0, 0, 0), std=(1, 1, 1), max_pixel_value=255.0, p=1.0),
-        ToTensorV2(p=1.0)
-    ], bbox_params={'format': 'pascal_voc', 'label_fields': ['labels']})
-
-
-def get_test_transform():
-    return A.Compose([
-        A.Normalize(mean=(0, 0, 0), std=(1, 1, 1), max_pixel_value=255.0, p=1.0),
-        ToTensorV2(p=1.0)
-    ], bbox_params={'format': 'pascal_voc', 'label_fields': ['labels']})
-
-
-def collate_fn(batch):
-    return tuple(zip(*batch))
-
-
 def read_dataset(args, dataset_path):
     # Check
     ds_loc = Path(dataset_path)
@@ -195,12 +99,12 @@ def read_dataset(args, dataset_path):
     
 def reload_retrained_models(args):
     cache_models = [i for i in os.listdir(args.model_store) if '.pkl' in i]
-    if len(cache_models) == 0:
-        return 0
-    else:
-        cache_index = [int(re.findall(r'_epoch(\d+)', i)[0]) for i in cache_models]
+    cache_index = [int(re.findall(r'_epoch(\d+)', i)[0]) for i in cache_models]
+    if len(cache_index) > 0:
         max_idx = max(cache_index)
-        return max_idx, cache_index
+    else:
+        max_idx = 0
+    return max_idx, cache_index
     
     
 def run(args):
@@ -222,7 +126,7 @@ def run(args):
 
     if (max_cache_id!=0) and (args.resume is True):
         logging.info('Continuous training...')
-        logging.info(f'Found {len(cache_index)} models cached, maximum index model: {max_cache_id}')
+        logging.info(f'Found {len(cache_index)} cached models, maximum index model: {max_cache_id}')
         last_model_fn = f'{args.model_store}/{args.backbone}_epoch{max_cache_id}.pkl'
         model = torch.load(last_model_fn, map_location='cuda:%s' % args.cuda)
         model = model.train()

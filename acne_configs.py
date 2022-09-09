@@ -17,9 +17,18 @@ ID_SHORTDESC = {
 }
 
 ID_COLOR = {
-    0: (255, 0, 0), #red
-    1: (255, 128, 0), #Orange
-    2: (255, 153, 255), #pink
-    3: (0, 255, 0), #green
-    4: (0, 0, 255) #blue
+    0: (25, 25, 180), # strong-blue/blue-black
+    1: (255, 128, 255), # pink
+    2: (0, 155, 0), # green
+    3: (100, 230, 230), # light blue
+    4: (230, 0, 0) # red
+}
+
+# Float
+ID_COLOR_FLOAT = {
+    0: (0.1, 0.1, 0.7), # strong-blue/blue-black
+    1: (1.0, 0.5, 1.0), # pink
+    2: (0, 0.6, 0), # green
+    3: (0.4, 0.9, 0.9), # light blue
+    4: (0.9, 0, 0), # red
 }
