@@ -1,7 +1,11 @@
 # Skin Detective
 
 References:
+
+
 https://pytorch.org/tutorials/intermediate/torchvision_tutorial.html
+
+
 https://arxiv.org/pdf/1405.0312.pdf
 
 
@@ -19,7 +23,7 @@ https://arxiv.org/pdf/1405.0312.pdf
 ## Environment
 
 ```
-python>=3.7
+python=3.9
 ```
 
 ---
