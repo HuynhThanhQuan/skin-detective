@@ -1,2 +1,6 @@
 .ipynb_checkpoints
+*.pkl
+data/*
+!data/download_data.txt
+!models/download_model.txt
 
