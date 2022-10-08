@@ -7,7 +7,9 @@ FROM ubuntu:20.04
 RUN apt-get update
 RUN apt-get install -y \
     wget \ 
-    vim
+    vim \
+    zip \
+    unzip
 
 #　WORKDIR =>Create and move an arbitrary directory directly under the root on the container side
 WORKDIR /opt
@@ -25,13 +27,38 @@ RUN wget https://repo.anaconda.com/archive/Anaconda3-2022.05-Linux-x86_64.sh && 
 
 #PATH of anaconda3
 #  ENV =>Change environment variables
-#ENV PATH /opt/anaconda3/bin:$PATH
+ENV PATH /opt/anaconda3/bin:$PATH
 
 #pip upgrade
-#RUN pip install --upgrade pip
+RUN pip install --upgrade pip
+
+#install gdrive download
+RUN pip install gdown
+
+# Copy source folder to container
+COPY . /opt/program
+
+# Set Environment variables
+ENV DATA_ID=1MDAqxciP7Rm9Hs25OL-3sW_cXmJwf0B8
+ENV MODEL_ID=1tofvtca8kc9iOtWRfXunXt3vGyAIz2yg
+
+# Return to workdir-data folder
+WORKDIR /opt/program/data
+
+# Execute download data
+RUN gdown $DATA_ID
+
+# Unzip data
+RUN unzip data.zip
+
+# Return to workdir-model folder
+WORKDIR /opt/program/models
+
+# Download model
+RUN gdown $MODEL_ID
 
 #Return directly under root
-#WORKDIR /
+WORKDIR /opt/program
 
 #Open jupyter lab when container starts
 #  CMD =>Specify the command to be executed when the container starts
@@ -39,4 +66,5 @@ RUN wget https://repo.anaconda.com/archive/Anaconda3-2022.05-Linux-x86_64.sh && 
 #  "--ip=0.0.0.0" =>Remove ip restrictions
 #  "--allow-root" =>Allow root user, not good for security
 #  "LabApp.token=''" = >It can be started without a token. Not good for security
-#CMD ["jupyter", "lab", "--ip=0.0.0.0", "--allow-root", "--LabApp.token=''"]
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--allow-root", "--LabApp.token=''"]
+
