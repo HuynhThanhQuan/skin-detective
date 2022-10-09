@@ -42,8 +42,8 @@ RUN pip install --upgrade pip
 #install gdrive download
 RUN pip install gdown
 
-# Copy source folder to container
-COPY . /opt/program
+# Clone repo
+RUN git clone https://github.com/HuynhThanhQuan/skin-detective.git
 
 # Clone and build pycocotools
 WORKDIR /opt/program
