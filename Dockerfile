@@ -15,7 +15,7 @@ RUN apt-get install -y \
     gcc \
     nano
 # Install opencv lib
-RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC
+ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get install -y ffmpeg libsm6 libxext6
 
 #　WORKDIR =>Create and move an arbitrary directory directly under the root on the container side
