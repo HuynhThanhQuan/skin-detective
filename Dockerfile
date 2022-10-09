@@ -9,7 +9,14 @@ RUN apt-get install -y \
     wget \ 
     vim \
     zip \
-    unzip
+    unzip \
+    git \
+    make \
+    gcc \
+    nano
+# Install opencv lib
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC
+RUN apt-get install -y ffmpeg libsm6 libxext6
 
 #　WORKDIR =>Create and move an arbitrary directory directly under the root on the container side
 WORKDIR /opt
@@ -37,6 +44,12 @@ RUN pip install gdown
 
 # Copy source folder to container
 COPY . /opt/program
+
+# Clone and build pycocotools
+WORKDIR /opt/program
+RUN git clone https://github.com/cocodataset/cocoapi.git
+WORKDIR /opt/program/cocoapi/PythonAPI
+RUN make
 
 # Set Environment variables
 ENV DATA_ID=1MDAqxciP7Rm9Hs25OL-3sW_cXmJwf0B8

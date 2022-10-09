@@ -25,6 +25,7 @@ from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.rpn import AnchorGenerator
 from torch.utils.data.sampler import SequentialSampler
 from torch.utils.data import DataLoader
+import tensorflow as tf
 
 # Misc
 from sklearn.model_selection import train_test_split
@@ -108,6 +109,9 @@ def reload_retrained_models(args):
     
     
 def run(args):
+    train_summary_writer = tf.summary.create_file_writer(os.path.join(args.log_tf_dir, 'train'))
+    test_summary_writer = tf.summary.create_file_writer(os.path.join(args.log_tf_dir, 'test'))
+    
     s_time = datetime.datetime.now()
     
     train_data_loader, val_data_loader, test_data_loader = read_dataset(args, args.data)
@@ -117,13 +121,14 @@ def run(args):
     device = torch.device("cuda:%s" % args.cuda if torch.cuda.is_available() else "cpu")
     logging.info(f'Selected GPU: {device}')
 
-    # Training process
+    # Prepare training
     NUM_CLASSES = len(acne_configs.ACNE_ID)
     logging.info(f'Number of classes: {NUM_CLASSES}')
     logging.info('===============TRAINING=============')
     start_epoch = 0
     max_cache_id, cache_index = reload_retrained_models(args)
 
+    # Continue training or new training
     if (max_cache_id!=0) and (args.resume is True):
         logging.info('Continuous training...')
         logging.info(f'Found {len(cache_index)} cached models, maximum index model: {max_cache_id}')
@@ -132,7 +137,7 @@ def run(args):
         model = model.train()
         start_epoch = max_cache_id + 1
     else:
-        # 1. Pretrained
+        # 1. Use pretrained model
         model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = FastRCNNPredictor(in_features, NUM_CLASSES)
@@ -164,17 +169,15 @@ def run(args):
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_step, gamma=args.lr_gamma)
 
     for epoch in range(start_epoch, args.epochs):
-        train_one_epoch(model, optimizer, train_data_loader, device, epoch, print_freq=args.print_freq)
+        train_one_epoch(model, optimizer, train_data_loader, device, epoch, print_freq=args.print_freq, writer=train_summary_writer)
         lr_scheduler.step()
-        evaluate(model, val_data_loader, device=device)
-        # mAP(val_dataset, val_data_loader)
+        evaluate(model, val_data_loader, device=device, writer=test_summary_writer)
         if epoch % args.save_epoch == (args.save_epoch - 1):
             lastest_model_fn = f'{args.model_store}/{args.backbone}_epoch{epoch}.pkl'
             torch.save(model, lastest_model_fn)
             
     logging.info('Evaluating test dataset')
-    evaluate(model, test_data_loader, device=device)
-    # mAP(test_dataset, test_data_loader)
+    evaluate(model, test_data_loader, device=device, writer=test_summary_writer)
     
     e_time = datetime.datetime.now() - s_time
     logging.info(f'Training completed in {e_time}')

@@ -28,7 +28,9 @@ os.makedirs(_today_folder, exist_ok=True)
 curr_time = datetime.datetime.now()
 _exe_time = curr_time.strftime("%H%M%S")
 os.makedirs(_today_folder / _exe_time, exist_ok=True)
-log_fn = _today_folder / _exe_time / 'log'
+log_dir = _today_folder / _exe_time
+log_tf_dir = log_dir / 'tf'
+log_fn = log_dir / 'log'
 
 
 if __name__ == '__main__':
@@ -60,6 +62,7 @@ if __name__ == '__main__':
     parser.add_argument('--print_freq', default=100, type=int, help='Number of steps to printout - 100')
 
     parser.add_argument('--log_level', default='debug', type=str, help='Log Level - Debug')
+    parser.add_argument('--log_dir', default=str(log_dir), type=str)
     
     # Main
     args = parser.parse_args(sys.argv[1:])

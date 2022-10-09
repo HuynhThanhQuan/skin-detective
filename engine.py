@@ -10,7 +10,7 @@ from coco_eval import CocoEvaluator
 import utils
 
 
-def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq):
+def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, writer):
     model.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
@@ -51,6 +51,9 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq):
 
         metric_logger.update(loss=losses_reduced, **loss_dict_reduced)
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
+        
+    with writer.as_default():
+        tf.summary.scalar('loss', losses_reduced, step=epoch)
 
 
 def _get_iou_types(model):
@@ -66,7 +69,7 @@ def _get_iou_types(model):
 
 
 @torch.no_grad()
-def evaluate(model, data_loader, device):
+def evaluate(model, data_loader, device, writer):
     n_threads = torch.get_num_threads()
     # FIXME remove this and make paste_masks_in_image run on the GPU
     torch.set_num_threads(1)
@@ -105,4 +108,8 @@ def evaluate(model, data_loader, device):
     coco_evaluator.accumulate()
     coco_evaluator.summarize()
     torch.set_num_threads(n_threads)
+    
+    # with writer.as_default():
+    #     tf.summary.scalar('loss', losses_reduced, step=epoch)
+    
     return coco_evaluator

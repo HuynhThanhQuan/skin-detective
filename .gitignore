@@ -3,4 +3,7 @@
 data/*
 !data/download_data.txt
 !models/download_model.txt
-
+__pycache__/
+pycocotools/
+logs/
+cocoapi/
