@@ -42,11 +42,9 @@ RUN pip install --upgrade pip
 #install gdrive download
 RUN pip install gdown
 
-# Clone repo
-RUN git clone https://github.com/HuynhThanhQuan/skin-detective.git
-
 # Clone and build pycocotools
 WORKDIR /opt/program
+RUN git clone https://github.com/HuynhThanhQuan/skin-detective.git
 RUN git clone https://github.com/cocodataset/cocoapi.git
 WORKDIR /opt/program/cocoapi/PythonAPI
 RUN make
@@ -73,8 +71,18 @@ RUN gdown $MODEL_ID
 #Return directly under root
 WORKDIR /opt/program
 
+# Copy data into working dir
+RUN mv data/* skin-detective/data
+RUN mv models/* skin-detective/models
+RUN mv cocoapi/PythonAPI/pycocotools skin-detective/
+
+WORKDIR /opt/program/skin-detective
+
+# Install cuda
+RUN apt install -y nvidia-cuda-toolkit
+
 # Install package (broken)
-RUN pip install -r requirements.txt
+#RUN pip install -r requirements.txt
 
 #Open jupyter lab when container starts
 #  CMD =>Specify the command to be executed when the container starts
@@ -82,4 +90,4 @@ RUN pip install -r requirements.txt
 #  "--ip=0.0.0.0" =>Remove ip restrictions
 #  "--allow-root" =>Allow root user, not good for security
 #  "LabApp.token=''" = >It can be started without a token. Not good for security
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8080","--allow-root", "--LabApp.token=''"]
+#CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8080","--allow-root", "--LabApp.token=''"]

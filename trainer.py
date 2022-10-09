@@ -109,8 +109,8 @@ def reload_retrained_models(args):
     
     
 def run(args):
-    train_summary_writer = tf.summary.create_file_writer(os.path.join(args.log_tf_dir, 'train'))
-    test_summary_writer = tf.summary.create_file_writer(os.path.join(args.log_tf_dir, 'test'))
+    train_summary_writer = tf.summary.create_file_writer(os.path.join(args.log_dir, 'tf', 'train'))
+    test_summary_writer = tf.summary.create_file_writer(os.path.join(args.log_dir, 'tf', 'test'))
     
     s_time = datetime.datetime.now()
     
