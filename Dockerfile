@@ -1,6 +1,6 @@
 #!/bin/sh
 # FROM =>Select a base image
-FROM ubuntu:20.04
+FROM --platform=linux/amd64 ubuntu:20.04
 
 # RUN =>Call a command
 # apt-Upgrade get and install the required packages
@@ -69,5 +69,4 @@ WORKDIR /opt/program
 #  "--ip=0.0.0.0" =>Remove ip restrictions
 #  "--allow-root" =>Allow root user, not good for security
 #  "LabApp.token=''" = >It can be started without a token. Not good for security
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--allow-root", "--LabApp.token=''"]
-
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8080","--allow-root", "--LabApp.token=''"]
