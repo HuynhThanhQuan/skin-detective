@@ -74,7 +74,7 @@ RUN gdown $MODEL_ID
 WORKDIR /opt/program
 
 # Install package (broken)
-#RUN cat requirements.txt | xargs -n 1 pip install
+RUN pip install -r requirements.txt
 
 #Open jupyter lab when container starts
 #  CMD =>Specify the command to be executed when the container starts
