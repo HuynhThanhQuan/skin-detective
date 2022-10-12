@@ -2,6 +2,14 @@
 # FROM =>Select a base image
 FROM --platform=linux/amd64 et2010/jupyter-tensorflow-pytorch-gpu
 
+USER root
+
+RUN rm /etc/apt/sources.list.d/cuda.list
+RUN rm /etc/apt/sources.list.d/nvidia-ml.list
+RUN apt-key del 7fa2af80
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/7fa2af80.pub
+
 RUN apt-get update
 RUN apt-get install -y \
     wget \ 
@@ -32,7 +40,7 @@ WORKDIR /opt/program
 RUN git clone https://github.com/cocodataset/cocoapi.git
 WORKDIR /opt/program/cocoapi/PythonAPI
 RUN make
-RUN mv cocoapi/PythonAPI/pycocotools skin-detective/
+RUN mv /opt/program/cocoapi/PythonAPI/pycocotools /opt/program/skin-detective/
 
 # Set Environment variables
 ENV DATA_ID=1MDAqxciP7Rm9Hs25OL-3sW_cXmJwf0B8
@@ -48,5 +56,7 @@ WORKDIR /opt/program/skin-detective/models
 RUN gdown $MODEL_ID
 
 WORKDIR /opt/program/skin-detective
+
+RUN echo python -m "import torch; print(torch.cuda.is_available())"
 
 #CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8080","--allow-root", "--LabApp.token=''"]
