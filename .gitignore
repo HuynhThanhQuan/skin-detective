@@ -7,3 +7,8 @@ __pycache__/
 pycocotools/
 logs/
 cocoapi/
+
+#vastai
+onstart.log
+onstart.sh
+ports.log
