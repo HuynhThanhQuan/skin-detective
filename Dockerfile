@@ -57,6 +57,10 @@ RUN gdown $MODEL_ID
 
 WORKDIR /opt/program/skin-detective
 
-# RUN echo python -m "import torch; print(torch.cuda.is_available())"
+RUN pip install jupyterlab 
 
-#CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8080","--allow-root", "--LabApp.token=''"]
+RUN pip install -r requirements.txt
+
+EXPOSE 8080
+
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8080","--allow-root", "--LabApp.token=''"]
