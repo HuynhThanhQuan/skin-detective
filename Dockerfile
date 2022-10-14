@@ -1,17 +1,36 @@
 #!/bin/sh
-# FROM =>Select a base image
-FROM --platform=linux/amd64 et2010/jupyter-tensorflow-pytorch-gpu
+FROM --platform=linux/amd64 pytorch/pytorch:1.12.1-cuda11.3-cudnn8-devel
+# nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04
 
-USER root
-
-RUN rm /etc/apt/sources.list.d/cuda.list
-RUN rm /etc/apt/sources.list.d/nvidia-ml.list
-RUN apt-key del 7fa2af80
-RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
-RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/7fa2af80.pub
-
+# Install and update packages
 RUN apt-get update
+
+# Config tzdata and install opencv lib
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get install -y ffmpeg libsm6 libxext6
+    
+# Install python3.8 and pip
 RUN apt-get install -y \
+    python3.8-dev \
+    python3-pip \
+    python3-dev
+RUN apt-get install -y \
+    software-properties-common \
+    build-essential \
+    zlib1g-dev \
+    libncurses5-dev \
+    libgdbm-dev \
+    libnss3-dev \
+    libssl-dev \
+    libreadline-dev \
+    libffi-dev \
+    libsqlite3-dev \
+    libbz2-dev
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt-get update
+
+RUN apt-get install -y \
+    sudo \
     wget \ 
     vim \
     zip \
@@ -20,49 +39,64 @@ RUN apt-get install -y \
     make \
     gcc \
     nano
+    
+# Install and update packages
+RUN apt-get update
 
-# Install opencv lib
-ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get install -y ffmpeg libsm6 libxext6
+# Add ubuntu user with default password is 1
+RUN useradd -rm -d /home/ubuntu -s /bin/bash -g root -G sudo -u 1001 ubuntu
+RUN echo 'ubuntu:1' | chpasswd
 
-#pip upgrade
+# Switch to ubuntu user and change directory
+USER ubuntu
+WORKDIR /home/ubuntu
+
+# Pip upgrade and PATH environment
+ENV PATH="$PATH:/home/ubuntu/.local/bin"
 RUN pip install --upgrade pip
 
-#install gdrive download
-RUN pip install gdown
+# Install gdrive download
+RUN pip install \
+    gdown \
+    numpy \
+    cython
 
-# Clone skin-detective repo
-WORKDIR /opt/program
-RUN git clone https://github.com/HuynhThanhQuan/skin-detective.git
+# Copy skin-detective source code
+WORKDIR /home/ubuntu/skin-detective
+COPY --chown=ubuntu:root . .
+USER root
+RUN chown ubuntu:root /home/ubuntu/skin-detective
+USER ubuntu
 
 # Clone and build pycocotools
-WORKDIR /opt/program
+WORKDIR /home/ubuntu
 RUN git clone https://github.com/cocodataset/cocoapi.git
-WORKDIR /opt/program/cocoapi/PythonAPI
+WORKDIR /home/ubuntu/cocoapi/PythonAPI
 RUN make
-RUN mv /opt/program/cocoapi/PythonAPI/pycocotools /opt/program/skin-detective/
+WORKDIR /home/ubuntu
+RUN mv cocoapi/PythonAPI/pycocotools skin-detective/
 
 # Set Environment variables
 ENV DATA_ID=1MDAqxciP7Rm9Hs25OL-3sW_cXmJwf0B8
 ENV MODEL_ID=1tofvtca8kc9iOtWRfXunXt3vGyAIz2yg
 
 # Download skin data
-WORKDIR /opt/program/skin-detective/data
+WORKDIR /home/ubuntu/skin-detective/data
 RUN gdown $DATA_ID
 RUN unzip data.zip
 
 # Download models
-WORKDIR /opt/program/skin-detective/models
+WORKDIR /home/ubuntu/skin-detective/models
 RUN gdown $MODEL_ID
 
-WORKDIR /opt/program/skin-detective
+WORKDIR /home/ubuntu/skin-detective
 
-RUN pip install jupyterlab==3.4.5
-
-COPY requirements.txt requirements.txt
+RUN pip install jupyterlab==3.4.5 \
+    torch \
+    tensorflow
 
 RUN pip install -r requirements.txt
 
 EXPOSE 8080
 
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8080","--allow-root", "--LabApp.token=''"]
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8080", "--LabApp.token=''"]

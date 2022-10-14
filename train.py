@@ -45,19 +45,18 @@ if __name__ == '__main__':
     parser.add_argument('--resume', default=True, type=bool, help='Resume training model from the last execution - True')
     parser.add_argument('--pretrained', default=True, type=bool, help='Use pretrained weight - True')
     
-    parser.add_argument('--optimizer' , '-o', default='adam', type=str, help='Optimizer function [adam, sgd, adamw] - adam')
+    parser.add_argument('--optimizer' , '-o', default='adam', type=str, help='Optimizer function (adam, sgd, adamw) - adam')
     parser.add_argument('--learning_rate' , '-lr', default=0.0001, type=float, help='Learning rate - 0.0001')
     parser.add_argument('--lr_gamma', default=0.1, type=float, help='Scheduler LR gamma - 0.1')
     parser.add_argument('--lr_step', default=4, type=int, help='Scheduler LR step - 4')
     
     parser.add_argument('--cuda' , '-c', default=0, type=int, help='Use specific GPU - 0')
-    parser.add_argument('--resize_image', default=-1, type=int, help='Resize image - (-1: origin size)')
+    parser.add_argument('--resize_image', default=-1, type=int, help='Resize image - (-1: origin size/ (int)) - default -1')
     parser.add_argument('--batch_size','-b', default=2, type=int, help='Batch size - 2')
     parser.add_argument('--num_workers' , '-w', default=4, type=int, help='Use number of workers - 4')
     parser.add_argument('--verbose', '-v', default=10, type=int, help='Log the process and information - 10')
-    
 
-    parser.add_argument('--save_epoch', default=10, type=int, help='Number of epoch to save model - 10')
+    parser.add_argument('--save_epoch', default=100, type=int, help='Number of epoch to save model - 100')
     parser.add_argument('--model_store', default='./models', type=str, help='Place to store model - ./models')
     parser.add_argument('--print_freq', default=100, type=int, help='Number of steps to printout - 100')
 

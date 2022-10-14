@@ -1,0 +1,5 @@
+data/*
+logs/*
+models/*
+__pycache__
+.git
