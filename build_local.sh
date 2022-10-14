@@ -1,0 +1,1 @@
+docker build -t hthquan28/skin-detective .

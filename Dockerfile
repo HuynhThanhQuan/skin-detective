@@ -57,7 +57,7 @@ RUN gdown $MODEL_ID
 
 WORKDIR /opt/program/skin-detective
 
-RUN pip install jupyterlab 
+RUN pip install jupyterlab==3.4.5
 
 COPY requirements.txt requirements.txt
 

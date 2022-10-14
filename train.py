@@ -52,7 +52,7 @@ if __name__ == '__main__':
     
     parser.add_argument('--cuda' , '-c', default=0, type=int, help='Use specific GPU - 0')
     parser.add_argument('--resize_image', default=-1, type=int, help='Resize image - (-1: origin size)')
-    parser.add_argument('--batch_size','-b', default=2, type=int, help='Batch size - 4')
+    parser.add_argument('--batch_size','-b', default=2, type=int, help='Batch size - 2')
     parser.add_argument('--num_workers' , '-w', default=4, type=int, help='Use number of workers - 4')
     parser.add_argument('--verbose', '-v', default=10, type=int, help='Log the process and information - 10')
     

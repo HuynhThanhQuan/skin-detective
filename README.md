@@ -1,4 +1,5 @@
 # Skin Detective
+---
 
 References:
 
@@ -10,44 +11,50 @@ https://arxiv.org/pdf/1405.0312.pdf
 
 
 --- 
-## Outline
+## Get Started
 
-- Setup environment
-- How to use
-  - Object Detection
-  - Machine Learning
-- Demo
+### Container
+
+Reproduce the exact environment
+
+
+```
+docker pull hthquan28/skin-detective
+
+```
+
+Run Jupyterlab in container, with expose port 8080 and using NVIDIA Driver
+
+```
+docker run -it --gpus all -p 8080:8080 --name skin_container hthquan28/skin-detective
+```
+
+Run on detached mode
+
+```
+docker run -d --gpus all -p 8080:8080 --name skin_container hthquan28/skin-detective
+```
+
+Using terminal in container
+
+```
+docker exec -it skin_container bash
+```
+
+Build container
+
+```
+sh build_local.sh
+```
+
+*Note*: 
+
+Due to different architectures of your Graphic Card, you might not able to run it, for more information please refer this article. https://github.com/NVIDIA/nvidia-docker
 
 --- 
-
-## Environment
-
-```
-python=3.9
-```
-
----
 ## How to use
 
 **Folder structure** 
-
-
-- Object detection
-
-  - acne_detection.py
-  - coco_eval.py
-  - coco_utils.py
-  - engine.py
-  - transform.py
-  - utils.py
-
-- Machine learning
-  - acne_circle_final.ipynb
-
-- Present/Demo
-  - present3.ipynb
-
-- mAP
 
 
 **Setup**
