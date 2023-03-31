@@ -8,4 +8,4 @@ scikit-image
 scikit-learn
 scipy
 setuptools==59.5.0
-wheel==0.37.1
+wheel==0.38.1
