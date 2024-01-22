@@ -3,7 +3,7 @@ imageio==2.21.2
 matplotlib==3.5.3
 opencv-python==4.6.0.66
 pandas
-Pillow==10.0.1
+Pillow==10.2.0
 scikit-image
 scikit-learn
 scipy
