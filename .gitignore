@@ -12,3 +12,4 @@ cocoapi/
 onstart.log
 onstart.sh
 ports.log
+**.zip
