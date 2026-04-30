@@ -1,0 +1,19 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: api/Dockerfile
+    image: skin-detective-api:latest
+    container_name: skin-detective-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../models:/app/models:ro
+    environment:
+      SKIN_DETECTIVE_MODEL_PATH: /app/models/detector.pt
+      SKIN_DETECTIVE_SCORE_THRESHOLD: "0.5"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G

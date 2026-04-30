@@ -1,15 +1,29 @@
-.ipynb_checkpoints
-*.pkl
-data/*
-!data/download_data.txt
-!models/download_model.txt
+.DS_Store
+.ipynb_checkpoints/
 __pycache__/
-pycocotools/
+*.pyc
+*.pkl
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# data + models — pulled at runtime, not stored in git
+data/
+!data/download_data.txt
+models/
+!models/download_model.txt
 logs/
+pycocotools/
 cocoapi/
 
-#vastai
+# vast.ai
 onstart.log
 onstart.sh
 ports.log
 **.zip
+
+# editor
+.vscode/
+.idea/

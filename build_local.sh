@@ -1,1 +1,3 @@
-docker build -t hthquan28/skin-detective .
+#!/usr/bin/env bash
+set -euo pipefail
+docker build -t skin-detective .

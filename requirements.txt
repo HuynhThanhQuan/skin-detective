@@ -1,11 +1,32 @@
-albumentations==1.2.1
-imageio==2.21.2
-matplotlib==3.5.3
-opencv-python==4.6.0.66
-pandas
-Pillow==10.0.1
-scikit-image
-scikit-learn
-scipy
-setuptools==65.5.1
-wheel==0.38.1
+# Core (CPU/GPU agnostic — install torch separately for the right CUDA target).
+# For CPU-only:        pip install torch==2.4.1 torchvision==0.19.1
+# For CUDA 12.1 GPU:   pip install torch==2.4.1+cu121 torchvision==0.19.1+cu121 --index-url https://download.pytorch.org/whl/cu121
+torch==2.4.1
+torchvision==0.19.1
+
+# Vision + augmentation
+albumentations==1.4.18
+imageio==2.36.1
+opencv-python-headless==4.10.0.84
+Pillow==11.0.0
+scikit-image==0.24.0
+
+# Classical ML for grade classifier
+scikit-learn==1.5.2
+lightgbm==4.5.0
+pandas==2.2.3
+numpy==1.26.4
+scipy==1.14.1
+
+# COCO toolkit
+pycocotools==2.0.8
+
+# Visualization (notebooks/training plots)
+matplotlib==3.9.2
+
+# Logging — replaces the old TF SummaryWriter dependency
+tensorboard==2.18.0
+
+# Build pins (security)
+setuptools>=75.0.0
+wheel>=0.44.0

@@ -25,7 +25,7 @@ from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.rpn import AnchorGenerator
 from torch.utils.data.sampler import SequentialSampler
 from torch.utils.data import DataLoader
-import tensorflow as tf
+from torch.utils.tensorboard import SummaryWriter
 
 # Misc
 from sklearn.model_selection import train_test_split
@@ -109,8 +109,8 @@ def reload_retrained_models(args):
     
     
 def run(args):
-    train_summary_writer = tf.summary.create_file_writer(os.path.join(args.log_dir, 'tf', 'train'))
-    test_summary_writer = tf.summary.create_file_writer(os.path.join(args.log_dir, 'tf', 'test'))
+    train_summary_writer = SummaryWriter(log_dir=os.path.join(args.log_dir, 'tb', 'train'))
+    test_summary_writer = SummaryWriter(log_dir=os.path.join(args.log_dir, 'tb', 'test'))
     
     s_time = datetime.datetime.now()
     

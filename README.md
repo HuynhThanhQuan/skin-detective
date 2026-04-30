@@ -1,102 +1,154 @@
-# Skin Detective AI Engine
+# Skin Detective
 
-This is the AI core engine behind the project Skin-Detective AI which is published on Diagnostics ([Scopus Impact Factor 3.9](https://www.mdpi.com/journal/diagnostics/imprint))
+> AI engine behind **Skin Detective** — automatic acne object detection and severity grading
+> from smartphone images. Published in *Diagnostics* 2022 (Q1, JCR; Scopus IF 3.9).
 
-Article links
+[![ci](https://github.com/HuynhThanhQuan/skin-detective/actions/workflows/ci.yml/badge.svg)](https://github.com/HuynhThanhQuan/skin-detective/actions/workflows/ci.yml)
+[![paper](https://img.shields.io/badge/Diagnostics-12%282022%29%201879-blue)](https://doi.org/10.3390/diagnostics12081879)
 
-- [MDPI Journal](https://www.mdpi.com/2075-4418/12/8/1879)
-- [National Library of Medicine](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9406819/)
-- [Diagnostics 2022, 12(8), 1879](https://doi.org/10.3390/diagnostics12081879)
+A two-stage pipeline: a **Faster R-CNN** detector localises five lesion classes on the face,
+then a **LightGBM** classifier consumes the detections and grades overall severity (mild /
+moderate / severe).
 
-![z3756639763317_f42efb611bb2356a668a7cef762a4118](https://user-images.githubusercontent.com/22089209/229078371-3fccfbde-407e-4e47-a577-95dc4e07eefb.jpg)
+## Highlights
 
-## News
+- **Paper:** [MDPI](https://www.mdpi.com/2075-4418/12/8/1879) · [PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9406819/) · [DOI 10.3390/diagnostics12081879](https://doi.org/10.3390/diagnostics12081879)
+- **Press:** [VnExpress (AI Tech Matching grant)](https://vnexpress.net/5-du-an-duoc-dau-tu-ai-tech-matching-4514085.html) · [VnExpress (product)](https://vnexpress.net/skin-detective-ung-dung-tich-hop-tri-tue-nhan-tao-phat-hien-cac-benh-ve-da-va-ket-noi-bac-si-da-lieu-4498851.html) · [Tuổi Trẻ](https://tuoitre.vn/khoi-nghiep-voi-khat-vong-khong-de-nguoi-dan-hoi-chut-la-di-vien-20230321231316476.htm) · [CafeF](https://cafef.vn/uoc-mo-nguoi-o-nong-thon-van-duoc-kham-bac-si-gioi-dang-sau-ung-dung-ai-ho-tro-kham-benh-danh-rieng-cho-nguoi-viet-20221120161048606.chn) · [video](https://drive.google.com/file/d/1_tZqrh5ARUuLCWThNOvOH1k30iosA1LL/view)
 
-- [vnexpress](https://vnexpress.net/5-du-an-duoc-dau-tu-ai-tech-matching-4514085.html?gidzl=5dFa8v9OWouHR-8cd4Q0BHfcw2A1IujvLJVfTD1CZIXLPhjmqa-FVbTZwNM1Gun-1sFi9J2r6L0-abA0AG)
-- [vnexpress](https://vnexpress.net/skin-detective-ung-dung-tich-hop-tri-tue-nhan-tao-phat-hien-cac-benh-ve-da-va-ket-noi-bac-si-da-lieu-4498851.html)
-- [tuoitre.vn](https://tuoitre.vn/khoi-nghiep-voi-khat-vong-khong-de-nguoi-dan-hoi-chut-la-di-vien-20230321231316476.htm?gidzl=pJqKRTrv97FA8H9eqsSdSC4W5cpEOY8aZd4NEfzb97ME84K-dMOc8umb5plEQYKZt2KIQp0XTWSjtNCdT0)
-- [cafef](https://cafef.vn/uoc-mo-nguoi-o-nong-thon-van-duoc-kham-bac-si-gioi-dang-sau-ung-dung-ai-ho-tro-kham-benh-danh-rieng-cho-nguoi-viet-20221120161048606.chn)
-- [video](https://drive.google.com/file/d/1_tZqrh5ARUuLCWThNOvOH1k30iosA1LL/view)
+## Repository layout
 
-## Reference
-
-- [COCO bject detection format](https://arxiv.org/pdf/1405.0312.pdf)
-
-## How to use
-
-### 1. Container
-
-Reproduce the exact environment
-
-```docker
-docker pull hthquan28/skin-detective
+```
+skin-detective/
+├── api/                      # FastAPI inference service (CPU/GPU)
+│   ├── main.py · inference.py · schemas.py
+│   ├── Dockerfile · docker-compose.yml
+│   └── tests/                # contract tests for the API surface
+├── notebook/                 # research / EDA / training notebooks
+├── test/                     # unit smoke tests
+├── doc/                      # paper + conference materials
+├── train.py · trainer.py     # detector training entry-point
+├── engine.py                 # train_one_epoch / evaluate loops
+├── acne_dataset.py           # COCO-formatted dataset adapter
+├── acne_configs.py           # class IDs, colours, short labels
+├── coco_eval.py · coco_utils.py
+├── requirements.txt          # runtime deps (pinned)
+├── requirements-dev.txt      # adds pytest, ruff, fastapi, uvicorn
+├── Dockerfile                # CPU image (Python 3.11 + Torch 2.4.1)
+├── Dockerfile.cuda           # GPU image (CUDA 12.1)
+└── Makefile                  # `make help`
 ```
 
-Run Jupyterlab in container, with expose port 8080 and using NVIDIA Driver
+## 1. Quick start
 
-```docker
-docker run -it --gpus all -p 8080:8080 --name skin_container hthquan28/skin-detective
+### Option A — Docker (recommended)
+
+```bash
+# CPU image (research / API):
+docker build -t skin-detective .
+docker run --rm -it -p 8888:8888 \
+  -v "$PWD/data":/app/data \
+  -v "$PWD/models":/app/models \
+  skin-detective
+# → JupyterLab at http://localhost:8888
+
+# GPU image (for training):
+docker build -f Dockerfile.cuda -t skin-detective:cuda .
+docker run --rm -it --gpus all -p 8888:8888 \
+  -v "$PWD/data":/app/data \
+  -v "$PWD/models":/app/models \
+  skin-detective:cuda
 ```
 
-Run on detached mode
+### Option B — Local virtualenv
 
-```docker
-docker run -d --gpus all -p 8080:8080 --name skin_container hthquan28/skin-detective
+```bash
+make install            # creates .venv, installs CPU torch + dev deps
+make test               # smoke tests on CPU
+make api                # FastAPI on http://localhost:8000
 ```
 
-Using terminal in container
+> See [`Makefile`](Makefile) for the full target list (`make help`).
 
-```docker
-docker exec -it skin_container bash
+## 2. Inference API
+
+```bash
+make api-up                   # docker compose -f api/docker-compose.yml up --build
+curl -s http://localhost:8000/health | jq
+curl -s -X POST -F file=@notebook/sample.jpg \
+  http://localhost:8000/predict | jq
 ```
 
-Build container
+Response shape (`POST /predict`):
 
-```docker
-sh build_local.sh
+```json
+{
+  "image_width": 1024, "image_height": 1024,
+  "detections": [
+    {"class_id": 1, "class_short": "thuong_viem", "score": 0.91,
+     "box": {"x": 312, "y": 488, "w": 64, "h": 70}}
+  ],
+  "severity_grade": "moderate",
+  "severity_probabilities": {"mild": 0.18, "moderate": 0.66, "severe": 0.16},
+  "inference_ms": 1140.3,
+  "model_version": "fasterrcnn-r50-v1"
+}
 ```
 
-*Note*:
-Due to different architectures of your Graphic Card, you might not able to run it, for more information please refer this [article](https://github.com/NVIDIA/nvidia-docker)
+Trained weights: drop the Faster R-CNN state dict at `models/detector.pt` (or set
+`SKIN_DETECTIVE_MODEL_PATH`). Without weights the API still boots and serves
+randomly-initialised predictions — useful for wiring tests, not diagnosis.
+See [`api/README.md`](api/README.md).
 
-## 2. Setup
+## 3. Training
 
-### 2.1 Install requirement packages
+Dataset must be COCO-formatted:
 
-```cmd
-pip install -r requirements.txt
+```
+data/
+├── train/{image, coco_instances.json}
+├── val/{image, coco_instances.json}
+└── test/{image, coco_instances.json}
 ```
 
-### 2.2 Prepare dataset
-
-Object detection dataset should be organized in COCO format
-
-```tree
-root
-| - bbox   <contain COCO format files info>
-    | - img1  <coco info of img1>
-    | - img2  <coco info of img2>
-| - image <contain images>
-    | - img1.jpg <img1>
-    | - img2.jpg  <img2>
-| - models   <store model files>
-| - mAP    <eval package>
+```bash
+make train                # python train.py --data ./data --epochs 100
+# checkpoints land in ./models/
+# tensorboard logs in ./logs/<date>/<time>/tb/{train,test}
+tensorboard --logdir logs/
 ```
 
-### 2.3 Train object detection
+For the **grade classifier** (LightGBM on detection statistics), run
+`notebook/acne_circle_final.ipynb`.
 
-```cmd
-python acne_detection.py
+## 4. Class taxonomy
+
+Defined in [`acne_configs.py`](acne_configs.py) (Vietnamese labels with English shortcodes):
+
+| ID | Label                    | Short        |
+|----|--------------------------|--------------|
+| 0  | dát tăng sắc tố (vết thâm) | `vet_tham`     |
+| 1  | sang thương viêm           | `thuong_viem`  |
+| 2  | sẹo mụn (lõm/lồi)          | `seo_mun`      |
+| 3  | còi (đóng/mở)              | `coi`          |
+| 4  | sang thương nang & nốt     | `thuong_nang`  |
+
+## 5. Citation
+
+```bibtex
+@article{huynh2022acne,
+  title   = {Automatic Acne Object Detection and Acne Severity Grading Using Smartphone Images and Artificial Intelligence},
+  author  = {Huynh, Quan T. and others},
+  journal = {Diagnostics},
+  volume  = {12}, number = {8}, pages = {1879}, year = {2022},
+  doi     = {10.3390/diagnostics12081879}
+}
 ```
 
-Look at help for more detail parameters
-Model will be trained and stored in **./models** folder
+## 6. License
 
-### 2.4 Train Grade Classifier
+[MIT](LICENSE).
 
-Run acne_circle_final.ipynb
-This should output lightgbm model for grade classifer
+---
 
-## 3. Demo
-
-Run file present2.ipynb to present the result and evaluation
+Maintained by [Huỳnh Thanh Quan](https://linkedin.com/in/charles-huynh) — part of the
+[Curious Machine](https://curiousmachine.152-42-201-32.sslip.io) project portfolio.
