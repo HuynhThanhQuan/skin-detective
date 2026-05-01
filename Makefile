@@ -39,6 +39,13 @@ test:  ## Run pytest (CPU).
 train:  ## Train the detector (expects ./data/{train,val,test} in COCO format).
 	$(ACT) && python train.py --data ./data --epochs 100
 
+.PHONY: train-mt
+train-mt:  ## Train the single-stage multi-task model (detection + severity).
+	$(ACT) && python train_multitask.py \
+		--data ./data/final/f_circle/ds \
+		--grade-csv ./data/final/grade1/label.csv ./data/final/grade2/label.csv \
+		--model fasterrcnn_r50_fpn --severity-head attention --epochs 50
+
 .PHONY: eval
 eval:  ## Re-run evaluate-only loop on the current ./models checkpoint.
 	$(ACT) && python -c "import trainer; print('Use trainer.run() with epochs=0 or call evaluate() directly.')"
