@@ -26,14 +26,13 @@ Forward contract:
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import Dict, List, Optional
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
+from torchvision.models import ResNet50_Weights
 from torchvision.models.detection import FasterRCNN, RetinaNet
-from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 from torchvision.models.detection.faster_rcnn import (
     FasterRCNN_ResNet50_FPN_Weights,
     FastRCNNPredictor,
@@ -42,7 +41,6 @@ from torchvision.models.detection.retinanet import (
     RetinaNet_ResNet50_FPN_Weights,
     RetinaNetClassificationHead,
 )
-from torchvision.models import ResNet50_Weights
 from torchvision.ops import roi_align
 
 from multitask_configs import (
@@ -50,7 +48,6 @@ from multitask_configs import (
     NUM_SEVERITY_CLASSES,
     SEVERITY_IGNORE_INDEX,
 )
-
 
 # ---------------------------------------------------------------------------
 # Severity heads
@@ -71,9 +68,9 @@ class GlobalPoolSeverityHead(nn.Module):
             nn.Linear(hidden, num_classes),
         )
 
-    def forward(self, features: Dict[str, torch.Tensor], **_) -> torch.Tensor:
+    def forward(self, features: dict[str, torch.Tensor], **_) -> torch.Tensor:
         # FPN dict keys are usually "0".."3" (+ "pool"). Use the deepest non-pool level.
-        keys = [k for k in features.keys() if k != "pool"]
+        keys = [k for k in features if k != "pool"]
         x = features[keys[-1]]
         return self.mlp(x)
 
@@ -87,7 +84,7 @@ class MultiScaleSeverityHead(nn.Module):
         # Lazy: don't know how many FPN levels until first forward. Build MLP on first call.
         self.hidden = hidden
         self.num_classes = num_classes
-        self.mlp: Optional[nn.Module] = None
+        self.mlp: nn.Module | None = None
 
     def _build_mlp(self, num_levels: int, device: torch.device) -> None:
         self.mlp = nn.Sequential(
@@ -97,8 +94,8 @@ class MultiScaleSeverityHead(nn.Module):
             nn.Linear(self.hidden, self.num_classes),
         ).to(device)
 
-    def forward(self, features: Dict[str, torch.Tensor], **_) -> torch.Tensor:
-        levels = [features[k] for k in features.keys() if k != "pool"]
+    def forward(self, features: dict[str, torch.Tensor], **_) -> torch.Tensor:
+        levels = [features[k] for k in features if k != "pool"]
         if self.mlp is None:
             self._build_mlp(len(levels), levels[0].device)
         pooled = [F.adaptive_avg_pool2d(f, 1).flatten(1) for f in levels]
@@ -127,7 +124,7 @@ class AttentionSeverityHead(nn.Module):
             nn.Linear(hidden, num_classes),
         )
 
-    def forward(self, features: Dict[str, torch.Tensor], **_) -> torch.Tensor:
+    def forward(self, features: dict[str, torch.Tensor], **_) -> torch.Tensor:
         tokens = []
         for k, f in features.items():
             if k == "pool":
@@ -181,12 +178,12 @@ class DetectionAwareSeverityHead(nn.Module):
 
     def _select_boxes(
         self,
-        targets: Optional[List[dict]],
-        detections: Optional[List[dict]],
+        targets: list[dict] | None,
+        detections: list[dict] | None,
         batch_size: int,
         device: torch.device,
-    ) -> List[torch.Tensor]:
-        boxes: List[torch.Tensor] = []
+    ) -> list[torch.Tensor]:
+        boxes: list[torch.Tensor] = []
         if targets is not None:
             for t in targets:
                 b = t["boxes"]
@@ -205,13 +202,13 @@ class DetectionAwareSeverityHead(nn.Module):
 
     def forward(
         self,
-        features: Dict[str, torch.Tensor],
-        image_sizes: Optional[List[tuple]] = None,
-        targets: Optional[List[dict]] = None,
-        detections: Optional[List[dict]] = None,
+        features: dict[str, torch.Tensor],
+        image_sizes: list[tuple] | None = None,
+        targets: list[dict] | None = None,
+        detections: list[dict] | None = None,
         **_,
     ) -> torch.Tensor:
-        keys = [k for k in features.keys() if k != "pool"]
+        keys = [k for k in features if k != "pool"]
         # Use the highest-resolution FPN level for RoI alignment — good detail for small acne lesions.
         feat_map = features[keys[0]]
         B = feat_map.size(0)
@@ -263,14 +260,14 @@ def build_severity_head(name: str, fpn_channels: int = 256) -> nn.Module:
 # ---------------------------------------------------------------------------
 
 
-def _severity_loss(logits: torch.Tensor, targets: List[dict]) -> torch.Tensor:
+def _severity_loss(logits: torch.Tensor, targets: list[dict]) -> torch.Tensor:
     sev = torch.stack([t["severity"] for t in targets]).to(logits.device)
     return F.cross_entropy(logits, sev, ignore_index=SEVERITY_IGNORE_INDEX)
 
 
-def _attach_severity(detections: List[dict], logits: torch.Tensor) -> List[dict]:
+def _attach_severity(detections: list[dict], logits: torch.Tensor) -> list[dict]:
     probs = F.softmax(logits, dim=-1)
-    for det, lg, pr in zip(detections, logits, probs):
+    for det, lg, pr in zip(detections, logits, probs, strict=False):
         det["severity_logits"] = lg
         det["severity_probs"] = pr
         det["severity_pred"] = int(pr.argmax().item())
