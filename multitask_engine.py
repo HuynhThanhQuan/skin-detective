@@ -10,16 +10,13 @@ from __future__ import annotations
 import math
 import sys
 import time
-from typing import Dict
 
 import torch
-import torch.nn.functional as F
-
 import torchvision.models.detection.mask_rcnn  # noqa: F401  (kept for backwards-compat with utils)
 
+import utils
 from coco_eval import CocoEvaluator
 from coco_utils import get_coco_api_from_dataset
-import utils
 from multitask_configs import SEVERITY_CLASSES, SEVERITY_IGNORE_INDEX
 
 
@@ -79,8 +76,8 @@ def evaluate(model, data_loader, device, writer, epoch: int = 0):
 
     sev_correct = 0
     sev_total = 0
-    sev_confusion: Dict[int, Dict[int, int]] = {
-        i: {j: 0 for j in range(len(SEVERITY_CLASSES))} for i in range(len(SEVERITY_CLASSES))
+    sev_confusion: dict[int, dict[int, int]] = {
+        i: dict.fromkeys(range(len(SEVERITY_CLASSES)), 0) for i in range(len(SEVERITY_CLASSES))
     }
 
     for images, targets in metric_logger.log_every(data_loader, 100, "Test:"):
@@ -96,12 +93,12 @@ def evaluate(model, data_loader, device, writer, epoch: int = 0):
         outputs_cpu = [{k: (v.to(cpu_device) if torch.is_tensor(v) else v) for k, v in o.items()} for o in outputs]
         res = {
             t["image_id"].item(): {k: v for k, v in o.items() if k in ("boxes", "labels", "scores")}
-            for t, o in zip(targets_dev, outputs_cpu)
+            for t, o in zip(targets_dev, outputs_cpu, strict=False)
         }
         coco_evaluator.update(res)
 
         # Severity accuracy (skip samples with ignore label).
-        for t, o in zip(targets, outputs_cpu):
+        for t, o in zip(targets, outputs_cpu, strict=False):
             gt = int(t["severity"].item())
             if gt == SEVERITY_IGNORE_INDEX:
                 continue

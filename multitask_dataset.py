@@ -14,8 +14,8 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, Iterable, Optional
 
 import cv2
 import numpy as np
@@ -26,14 +26,14 @@ from torch.utils.data import Dataset
 from multitask_configs import RAW_TO_SEVERITY, SEVERITY_IGNORE_INDEX
 
 
-def load_grade_map(grade_csvs: Iterable[str | Path]) -> Dict[str, int]:
+def load_grade_map(grade_csvs: Iterable[str | Path]) -> dict[str, int]:
     """Build {labelbox_id: severity_class_idx} from one or more grade CSVs."""
-    mapping: Dict[str, int] = {}
+    mapping: dict[str, int] = {}
     for csv_path in grade_csvs:
         df = pd.read_csv(csv_path)
         if "id" not in df.columns or "classification" not in df.columns:
             raise ValueError(f"{csv_path} must have columns 'id' and 'classification'")
-        for raw_id, raw_cls in zip(df["id"], df["classification"]):
+        for raw_id, raw_cls in zip(df["id"], df["classification"], strict=False):
             if pd.isna(raw_cls):
                 continue
             cls = RAW_TO_SEVERITY.get(int(raw_cls))
@@ -50,12 +50,12 @@ class MultiTaskAcneDataset(Dataset):
         self,
         dataset_loc: str | Path,
         transforms=None,
-        grade_map: Optional[Dict[str, int]] = None,
+        grade_map: dict[str, int] | None = None,
     ):
         super().__init__()
         self.dataset_loc = Path(dataset_loc)
         self.image_folder = self.dataset_loc / "image"
-        with open(self.dataset_loc / "coco_instances.json", "r") as fh:
+        with open(self.dataset_loc / "coco_instances.json") as fh:
             coco = json.load(fh)
         self.images = coco["images"]
         self.annotations = coco["annotations"]
@@ -64,7 +64,7 @@ class MultiTaskAcneDataset(Dataset):
         self._build_index()
 
     def _build_index(self) -> None:
-        per_image: Dict[int, dict] = {img["id"]: {"classes": [], "boxes": []} for img in self.images}
+        per_image: dict[int, dict] = {img["id"]: {"classes": [], "boxes": []} for img in self.images}
         for ann in self.annotations:
             per_image[ann["image_id"]]["classes"].append(ann["category_id"])
             per_image[ann["image_id"]]["boxes"].append(ann["bbox"])

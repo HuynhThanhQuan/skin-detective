@@ -1,11 +1,37 @@
 [tool.ruff]
 line-length = 110
 target-version = "py311"
-extend-exclude = ["notebook", "doc", "data", "models", "logs", "pycocotools"]
+extend-exclude = [
+    "notebook",
+    "doc",
+    "data",
+    "models",
+    "logs",
+    "pycocotools",
+    # Legacy 2-stage pipeline / torchvision-reference scripts: kept for reference only,
+    # not actively developed. New work lives in multitask_*.py, train_multitask.py, api/.
+    "acne_configs.py",
+    "acne_dataset.py",
+    "acne_utils.py",
+    "coco_eval.py",
+    "coco_utils.py",
+    "cocosplit.py",
+    "engine.py",
+    "trainer.py",
+    "train.py",
+    "train_detectron2.py",
+    "transforms.py",
+    "utils.py",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM"]
-ignore = ["E501"]  # line length handled by formatter
+ignore = [
+    "E501",  # line length handled by formatter
+    "N806",  # uppercase locals (B, C, H, W) are standard tensor-dim notation in ML code
+    "N812",  # F = nn.functional, A = albumentations, TF = transforms.functional are conventional aliases
+    "B008",  # function calls in defaults (File(...), Depends(...)) are the canonical FastAPI idiom
+]
 
 [tool.ruff.format]
 quote-style = "double"

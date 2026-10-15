@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import io
 import os
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Tuple
 
 import numpy as np
 import torch
@@ -22,7 +22,6 @@ from torchvision.models.detection import fasterrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.transforms import functional as TF
 
-import sys
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -88,8 +87,8 @@ class SkinDetective:
         labels = outputs["labels"].cpu().numpy()
 
         detections = []
-        kept_classes: List[int] = []
-        for box, score, label in zip(boxes, scores, labels):
+        kept_classes: list[int] = []
+        for box, score, label in zip(boxes, scores, labels, strict=False):
             if score < SCORE_THRESHOLD:
                 continue
             x0, y0, x1, y1 = box.tolist()
@@ -116,7 +115,7 @@ class SkinDetective:
         )
 
 
-def _grade_from_detections(class_ids: List[int]) -> Tuple[str, dict]:
+def _grade_from_detections(class_ids: list[int]) -> tuple[str, dict]:
     """Heuristic stand-in for the LightGBM grade classifier.
 
     Counts inflammatory + nodular detections and produces a soft 3-class score. Replace

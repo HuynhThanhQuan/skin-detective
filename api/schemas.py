@@ -1,4 +1,3 @@
-from typing import List
 
 from pydantic import BaseModel, Field
 
@@ -30,7 +29,7 @@ class GradeProbabilities(BaseModel):
 class PredictResponse(BaseModel):
     image_width: int
     image_height: int
-    detections: List[Detection]
+    detections: list[Detection]
     severity_grade: str
     severity_probabilities: GradeProbabilities
     inference_ms: float

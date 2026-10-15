@@ -25,6 +25,17 @@ def test_acne_configs_constants():
     assert set(acne_configs.ID_SHORTDESC.keys()) == set(range(5))
 
 
-@pytest.mark.parametrize("module", ["acne_dataset", "acne_utils", "engine", "utils"])
+@pytest.mark.parametrize(
+    "module",
+    [
+        "acne_dataset",
+        "acne_utils",
+        "multitask_configs",
+        "multitask_dataset",
+        "multitask_engine",
+        "multitask_models",
+        "multitask_transforms",
+    ],
+)
 def test_modules_importable(module):
     importlib.import_module(module)
